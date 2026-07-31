@@ -6,8 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/!_StarlightBar/Scenes/Bootstrap.unity
+    guid: 90412f9b7b93a1244a6dcb1d685fd9f3
+  - enabled: 1
+    path: Assets/!_StarlightBar/Scenes/MainMenu.unity
+    guid: bb600cd5e9cf58441a8ee5f533930ff9
+  - enabled: 1
+    path: Assets/!_StarlightBar/Scenes/Hyehwa.unity
+    guid: 2c578321c2a678f49af0fbc5b6771282
+  - enabled: 1
+    path: Assets/!_StarlightBar/Scenes/Kitchen.unity
+    guid: c17fe3f6d4ffd31458aaa58b06da656a
+  - enabled: 1
+    path: Assets/!_StarlightBar/Scenes/Bar.unity
+    guid: df51dd656b439454fb2035c595ccb6e1
   m_configObjects:
-    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 9e2b29676c95f4643ab84acd8243da97, type: 3}
   m_UseUCBPForAssetBundles: 0
