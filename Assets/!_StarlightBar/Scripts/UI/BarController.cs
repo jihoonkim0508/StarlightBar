@@ -2,6 +2,7 @@ using StarlightBar.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Yarn.Unity;
 
 namespace StarlightBar.UI
 {
@@ -9,9 +10,17 @@ namespace StarlightBar.UI
     {
         [SerializeField] private Button storyButton;
         [SerializeField] private TMP_Text storyButtonText;
+        [SerializeField] private Button dialogueButton;
+        [SerializeField] private CanvasGroup barUiGroup;
+        [SerializeField] private DialogueRunner dialogueRunner;
 
         private void Start()
         {
+            if (dialogueRunner != null)
+                dialogueRunner.onDialogueComplete.AddListener(UnlockBarUi);
+            if (dialogueButton != null)
+                dialogueButton.interactable = dialogueRunner != null;
+
             var gameManager = GameManager.Instance;
             if (gameManager == null || !gameManager.HasSave)
             {
@@ -33,6 +42,21 @@ namespace StarlightBar.UI
             }
         }
 
+        private void OnDestroy()
+        {
+            if (dialogueRunner != null)
+                dialogueRunner.onDialogueComplete.RemoveListener(UnlockBarUi);
+        }
+
+        public void PlayTestDialogue()
+        {
+            if (dialogueRunner == null || dialogueRunner.IsDialogueRunning)
+                return;
+
+            SetBarUiEnabled(false);
+            _ = dialogueRunner.StartDialogue("Start");
+        }
+
         public void EnterNextStory()
         {
             var gameManager = GameManager.Instance;
@@ -51,6 +75,20 @@ namespace StarlightBar.UI
                 storyButtonText.text = label;
             if (storyButton != null)
                 storyButton.interactable = interactable;
+        }
+
+        private void UnlockBarUi()
+        {
+            SetBarUiEnabled(true);
+        }
+
+        private void SetBarUiEnabled(bool enabled)
+        {
+            if (barUiGroup == null)
+                return;
+
+            barUiGroup.interactable = enabled;
+            barUiGroup.blocksRaycasts = enabled;
         }
     }
 }
