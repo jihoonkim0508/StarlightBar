@@ -1607,6 +1607,17 @@ MonoBehaviour:
   nextLineKeyCode: 27
   hurryUpOptionsKeyCode: 32
   cancelDialogueKeyCode: 0
+--- !u!114 &1283740700 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8309902628685535410, guid: 52571f68872914e24837210513edea1d, type: 3}
+  m_PrefabInstance: {fileID: 1283740696}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bec29c0a230741bdac901dba8da47ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1301277087
 GameObject:
   m_ObjectHideFlags: 0
@@ -2134,7 +2145,7 @@ MonoBehaviour:
   storyButtonText: {fileID: 1498891927}
   dialogueButton: {fileID: 1132366604}
   barUiGroup: {fileID: 1866312449}
-  dialogueRunner: {fileID: 0}
+  dialogueRunner: {fileID: 1283740700}
 --- !u!114 &1866312445
 MonoBehaviour:
   m_ObjectHideFlags: 0
