@@ -277,7 +277,7 @@
       "url": "https://packages.unity.com"
     },
     "dev.yarnspinner.unity": {
-      "version": "3.2.7",
+      "version": "3.2.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
