@@ -1,7 +1,13 @@
 title: Start
 ---
+<<give_item "warm_milk" 1>>
+<<start_quest "ch1_orion">>
+<<add_currency 5>>
 주인: 어서 오세요. 별빛주점입니다.
 주인: 오늘 밤은 별빛이 유난히 밝군요.
+<<if has_item("warm_milk")>>
+주인: [디버그] 따뜻한 우유 재고 {get_item_count("warm_milk")}개, 재화 {get_currency()}★ 확인했습니다.
+<<endif>>
 손님: 밖에서 간판을 보고 들어왔어요. 아직 영업 중인가요?
 주인: 물론이죠. 이곳은 마지막 별이 사라질 때까지 문을 열어 둡니다.
 주인: 그런데 손님 표정에 먼 길의 흔적이 보이네요.
@@ -78,6 +84,7 @@ title: EndingRest
 손님: 내일의 저는 오늘보다 조금 가벼워져 있겠죠?
 주인: 분명 그럴 겁니다. 별빛주점은 쉬어 갈 자리를 언제든 남겨 두겠습니다.
 주인: [엔딩 1 - 별빛 아래의 휴식]
+<<complete_quest "ch1_orion">>
 ===
 
 title: EndingSecret
