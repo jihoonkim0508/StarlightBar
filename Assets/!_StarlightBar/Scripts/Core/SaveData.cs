@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -11,16 +12,45 @@ namespace StarlightBar.Core
         Complete
     }
 
+    // [JungHo 추가] 퀘스트 진행 상태
+    public enum QuestState
+    {
+        NotStarted, // 시작 전
+        InProgress, // 진행 중
+        Complete    // 완료
+    }
+
+    // [JungHo 추가] 인벤토리 한 칸 (아이템 id + 보유 수량)
+    [Serializable]
+    public sealed class InventoryEntry
+    {
+        public string itemId;
+        public int quantity;
+    }
+
+    // [JungHo 추가] 퀘스트 기록 한 개 (퀘스트 id + 현재 상태)
+    [Serializable]
+    public sealed class QuestEntry
+    {
+        public string questId;
+        public QuestState state;
+    }
+
     [Serializable]
     public sealed class SaveData
     {
         public int version = JsonSaveStore.CurrentVersion;
         public StoryProgress storyProgress = StoryProgress.Storygame1;
+
+        // [JungHo 추가] 인벤토리/퀘스트/재화 저장 필드
+        public List<InventoryEntry> inventory = new List<InventoryEntry>(); // 보유 아이템 목록
+        public List<QuestEntry> quests = new List<QuestEntry>(); // 퀘스트 진행 목록
+        public int currency; // 보유 재화
     }
 
     internal sealed class JsonSaveStore
     {
-        internal const int CurrentVersion = 1;
+        internal const int CurrentVersion = 2; // [JungHo 수정] 인벤토리/퀘스트/재화 필드 추가로 1 → 2 상향
 
         private readonly string path = Path.Combine(Application.persistentDataPath, "save.json");
 

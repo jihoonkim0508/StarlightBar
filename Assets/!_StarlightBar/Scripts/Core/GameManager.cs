@@ -10,6 +10,12 @@ namespace StarlightBar.Core
         public bool HasSave { get; private set; }
         public StoryProgress StoryProgress => saveData?.storyProgress ?? StoryProgress.Storygame1;
 
+        // ===== [JungHo 추가] 인벤토리/퀘스트/상점/재화 접근용 프로퍼티 =====
+        public int Currency => saveData?.currency ?? 0; // 보유 재화 조회
+        public InventoryManager Inventory { get; private set; } // 인벤토리 매니저
+        public QuestManager Quests { get; private set; } // 퀘스트 매니저
+        public ShopManager Shop { get; private set; } // 상점 매니저
+
         private JsonSaveStore saveStore;
         private SaveData saveData;
 
@@ -26,6 +32,7 @@ namespace StarlightBar.Core
 
             saveStore = new JsonSaveStore();
             HasSave = saveStore.TryLoad(out saveData);
+            RebuildGameplayManagers(); // [JungHo 추가] 인벤토리/퀘스트/상점 매니저 갱신
         }
 
         private void Start()
@@ -44,6 +51,7 @@ namespace StarlightBar.Core
         {
             saveData = new SaveData();
             HasSave = saveStore.Save(saveData);
+            RebuildGameplayManagers(); // [JungHo 추가]
             if (HasSave)
                 LoadScene("Bar");
         }
@@ -51,10 +59,48 @@ namespace StarlightBar.Core
         public bool ContinueGame()
         {
             HasSave = saveStore.TryLoad(out saveData);
+            RebuildGameplayManagers(); // [JungHo 추가]
             if (HasSave)
                 LoadScene("Bar");
 
             return HasSave;
+        }
+
+        // ===== [JungHo 추가] 저장 / 재화 관련 메서드 =====
+
+        // 현재 saveData를 파일에 저장
+        public bool SaveGame() => saveData != null && saveStore.Save(saveData);
+
+        // 재화 증가 (음수/저장없음이면 실패)
+        public bool AddCurrency(int amount)
+        {
+            if (saveData == null || amount <= 0)
+                return false;
+
+            saveData.currency += amount;
+            var saved = saveStore.Save(saveData);
+            GameEvents.RaiseStateChanged();
+            return saved;
+        }
+
+        // 재화 차감 (부족하면 실패)
+        public bool SpendCurrency(int amount)
+        {
+            if (saveData == null || amount <= 0 || saveData.currency < amount)
+                return false;
+
+            saveData.currency -= amount;
+            var saved = saveStore.Save(saveData);
+            GameEvents.RaiseStateChanged();
+            return saved;
+        }
+
+        // saveData가 (재)할당될 때마다 인벤토리/퀘스트/상점 매니저를 새로 만들어 연결
+        private void RebuildGameplayManagers()
+        {
+            Inventory = saveData != null ? new InventoryManager(saveData) : null;
+            Quests = saveData != null ? new QuestManager(saveData) : null;
+            Shop = saveData != null ? new ShopManager(this, Inventory) : null;
         }
 
         public bool CompleteStory(StoryProgress completedStory)
