@@ -10,6 +10,25 @@ namespace StarlightBar.UI
     // Bar.unity를 병합하는 중이라 씬 파일 충돌을 피하기 위함.
     internal static class UIFactory
     {
+        // ===== 나중에 조정할 일이 생길 수 있는 수치들을 한곳에 모아둠 =====
+        private const float ButtonLabelFontSize = 22f; // CreateButton 라벨 글자 크기
+
+        // CreatePanelChrome — 패널 제목(헤더) 영역
+        private const float HeaderFontSize = 28f;
+        private const float HeaderTopMargin = 16f; // 패널 위쪽에서 헤더까지 여백
+        private const float HeaderSideMargin = 24f; // 헤더 좌우 여백
+        private const float HeaderHeight = 40f;
+
+        // CreatePanelChrome — 닫기(X) 버튼
+        private const float CloseButtonMargin = 16f; // 패널 우측 상단에서 떨어진 거리
+        private static readonly Vector2 CloseButtonSize = new Vector2(36, 36);
+
+        // CreatePanelChrome — 본문(목록) 영역 여백. top은 헤더 높이+여백만큼 아래에서 시작
+        private const float ContentSideMargin = 24f;
+        private const float ContentTopMargin = 72f;
+        private const float ContentBottomMargin = 24f;
+        private const float ContentRowSpacing = 8f; // 목록 항목 사이 세로 간격
+
         // 빈 RectTransform(UI 오브젝트) 하나 생성해서 parent 밑에 붙임
         internal static RectTransform CreateRect(string name, Transform parent)
         {
@@ -51,7 +70,7 @@ namespace StarlightBar.UI
             if (onClick != null)
                 button.onClick.AddListener(onClick);
 
-            var labelText = CreateLabel("Label", image.transform, label, font, 22f, textColor, TextAlignmentOptions.Center);
+            var labelText = CreateLabel("Label", image.transform, label, font, ButtonLabelFontSize, textColor, TextAlignmentOptions.Center);
             StretchFull(labelText.rectTransform);
 
             return button;
@@ -80,19 +99,19 @@ namespace StarlightBar.UI
             panelRect.anchoredPosition = Vector2.zero;
             panel.SetActive(false);
 
-            var header = CreateLabel("Header", panel.transform, title, font, 28f, UITheme.TextPrimary, TextAlignmentOptions.Left);
+            var header = CreateLabel("Header", panel.transform, title, font, HeaderFontSize, UITheme.TextPrimary, TextAlignmentOptions.Left);
             header.fontStyle = FontStyles.Bold;
-            AnchorTopStretch(header.rectTransform, topMargin: 16f, sideMargin: 24f, height: 40f);
+            AnchorTopStretch(header.rectTransform, topMargin: HeaderTopMargin, sideMargin: HeaderSideMargin, height: HeaderHeight);
 
             var closeButton = CreateButton("CloseButton", panel.transform, "X", font, UITheme.AccentCoral, UITheme.TextPrimary, () => panel.SetActive(false));
-            AnchorTopRight((RectTransform)closeButton.transform, marginX: 16f, marginY: 16f, size: new Vector2(36, 36));
+            AnchorTopRight((RectTransform)closeButton.transform, marginX: CloseButtonMargin, marginY: CloseButtonMargin, size: CloseButtonSize);
 
             var content = CreateRect("Content", panel.transform);
-            StretchWithMargins(content, left: 24f, top: 72f, right: 24f, bottom: 24f);
+            StretchWithMargins(content, left: ContentSideMargin, top: ContentTopMargin, right: ContentSideMargin, bottom: ContentBottomMargin);
             content.gameObject.AddComponent<RectMask2D>();
 
             var vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
-            vlg.spacing = 8f;
+            vlg.spacing = ContentRowSpacing;
             vlg.childControlWidth = true;
             vlg.childForceExpandWidth = true;
             vlg.childControlHeight = false;

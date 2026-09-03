@@ -1,73 +1,103 @@
-using StarlightBar.Core;
-using TMPro;
+﻿using StarlightBar.Core;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace StarlightBar.UI
 {
-    // 인벤토리 패널: 토글 버튼 + 보유 아이템 목록 패널을 코드로 생성하고 최신 상태로 유지
+    // 인벤토리 패널: 프리팹(InventoryPanelUI.prefab)에 미리 배치된 UI를
+    // 인벤토리 데이터로 채우고 열고 닫는 역할만 담당.
+    // 배경 색상·크기·위치는 전부 프리팹에서 직접 드래그/Inspector로 조정 → 저장하면 그대로 유지되고
+    // Play 모드에서도 저장된 그 상태 그대로 반영됨 (코드가 매번 새로 만드는 게 아니라
+    // 프리팹에 이미 저장된 실제 UI를 그대로 사용하기 때문).
     public sealed class InventoryPanelUI : MonoBehaviour
     {
-        private UITheme theme;
-        private GameObject panel;
-        private RectTransform content;
+        [SerializeField] private Button openButton;
+        [SerializeField] private Button closeButton;
+        [SerializeField] private GameObject panel;
+        [SerializeField] private Transform content;
+        [SerializeField] private InventoryRowView rowTemplate;
+        [SerializeField] private GameObject emptyLabel;
 
-        // 토글 버튼과 패널 틀을 생성 (아직 데이터는 안 채움)
+        private InventoryManager inventory;
+
+        // 버튼 클릭 연결 + 템플릿/패널 초기 비활성화
         private void Awake()
         {
-            theme = GetComponent<UITheme>();
+            if (openButton != null)
+                openButton.onClick.AddListener(TogglePanel);
+            if (closeButton != null)
+                closeButton.onClick.AddListener(ClosePanel);
 
-            var toggle = UIFactory.CreateButton("OpenInventoryButton", transform, "인벤토리", theme.Font, UITheme.PanelColor, UITheme.TextPrimary, TogglePanel);
-            UIFactory.AnchorTopLeftStack((RectTransform)toggle.transform, 0, new Vector2(168, 53), 24f, 92f, 12f);
-
-            var chrome = UIFactory.CreatePanelChrome("InventoryPanel", transform, "인벤토리", theme.Font, new Vector2(480, 420));
-            panel = chrome.panel;
-            content = chrome.content;
+            if (rowTemplate != null)
+                rowTemplate.gameObject.SetActive(false);
+            if (panel != null)
+                panel.SetActive(false);
         }
 
-        // 상태 변경 이벤트 구독 + 최초 1회 화면 갱신
+        // 인벤토리 변경 이벤트 구독 + 최초 1회 화면 갱신
         private void Start()
         {
-            GameEvents.OnStateChanged += Refresh;
+            inventory = GameManager.Instance?.Inventory;
+            if (inventory != null)
+                inventory.OnChanged += Refresh;
+
             Refresh();
         }
 
         // 파괴될 때 이벤트 구독 해제 (메모리 누수 방지)
         private void OnDestroy()
         {
-            GameEvents.OnStateChanged -= Refresh;
+            if (inventory != null)
+                inventory.OnChanged -= Refresh;
         }
 
         // 토글 버튼 클릭 시 패널 열기/닫기
         private void TogglePanel()
         {
+            if (panel == null)
+                return;
+
             var next = !panel.activeSelf;
             panel.SetActive(next);
             if (next)
                 Refresh();
         }
 
-        // 현재 인벤토리 상태를 읽어서 목록을 다시 그림
+        // 닫기(X) 버튼 클릭 시 패널 닫기
+        private void ClosePanel()
+        {
+            if (panel != null)
+                panel.SetActive(false);
+        }
+
+        // 현재 인벤토리 상태를 읽어서 목록을 다시 그림 (rowTemplate를 복제해서 채움)
         private void Refresh()
         {
-            for (var i = content.childCount - 1; i >= 0; i--)
-                Destroy(content.GetChild(i).gameObject);
-
-            var entries = GameManager.Instance?.Inventory?.Entries;
-            if (entries == null || entries.Count == 0)
-            {
-                UIFactory.CreateLabel("EmptyLabel", content, "아직 가진 아이템이 없습니다.", theme.Font, 20f, UITheme.TextMuted, TextAlignmentOptions.Center);
+            if (content == null || rowTemplate == null)
                 return;
+
+            // rowTemplate 자신은 남기고 이전에 복제해둔 행들만 지움
+            for (var i = content.childCount - 1; i >= 0; i--)
+            {
+                var child = content.GetChild(i);
+                if (child != rowTemplate.transform)
+                    Destroy(child.gameObject);
             }
+
+            var entries = inventory?.Entries;
+            var hasItems = entries != null && entries.Count > 0;
+
+            if (emptyLabel != null)
+                emptyLabel.SetActive(!hasItems);
+
+            if (!hasItems)
+                return;
 
             foreach (var entry in entries)
             {
-                var row = UIFactory.CreateRow($"Row_{entry.itemId}", content, 56f);
-
-                var nameLabel = UIFactory.CreateLabel("Name", row.transform, entry.itemId, theme.Font, 20f, UITheme.TextPrimary, TextAlignmentOptions.MidlineLeft);
-                UIFactory.StretchWithMargins(nameLabel.rectTransform, 16f, 0f, 80f, 0f);
-
-                var qtyLabel = UIFactory.CreateLabel("Qty", row.transform, $"x{entry.quantity}", theme.Font, 20f, UITheme.AccentCoral, TextAlignmentOptions.MidlineRight);
-                UIFactory.StretchWithMargins(qtyLabel.rectTransform, 0f, 0f, 16f, 0f);
+                var row = Instantiate(rowTemplate, content);
+                row.gameObject.SetActive(true);
+                row.SetData(entry.ItemId, entry.Quantity);
             }
         }
     }
