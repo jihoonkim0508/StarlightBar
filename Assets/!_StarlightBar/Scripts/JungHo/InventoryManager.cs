@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace StarlightBar.Core
@@ -7,6 +8,9 @@ namespace StarlightBar.Core
     public sealed class InventoryManager
     {
         private readonly SaveData saveData;
+
+        // 인벤토리 내용이 바뀔 때마다 발생. 구독자(예: InventoryPanelUI)가 이걸로 자기 화면을 갱신함.
+        public event Action OnChanged;
 
         public InventoryManager(SaveData saveData)
         {
@@ -20,7 +24,7 @@ namespace StarlightBar.Core
         public int GetQuantity(string itemId)
         {
             var entry = Find(itemId);
-            return entry?.quantity ?? 0;
+            return entry?.Quantity ?? 0;
         }
 
         // 특정 수량 이상 보유 중인지 확인
@@ -35,12 +39,12 @@ namespace StarlightBar.Core
             var entry = Find(itemId);
             if (entry == null)
             {
-                entry = new InventoryEntry { itemId = itemId, quantity = 0 };
+                entry = new InventoryEntry(itemId, 0);
                 saveData.inventory.Add(entry);
             }
 
-            entry.quantity += quantity;
-            GameEvents.RaiseStateChanged();
+            entry.ChangeQuantity(quantity);
+            RaiseChanged();
         }
 
         // 아이템 차감: 수량이 부족하면 실패(false), 0이 되면 목록에서 제거
@@ -50,14 +54,14 @@ namespace StarlightBar.Core
                 return false;
 
             var entry = Find(itemId);
-            if (entry == null || entry.quantity < quantity)
+            if (entry == null || entry.Quantity < quantity)
                 return false;
 
-            entry.quantity -= quantity;
-            if (entry.quantity <= 0)
+            entry.ChangeQuantity(-quantity);
+            if (entry.Quantity <= 0)
                 saveData.inventory.Remove(entry);
 
-            GameEvents.RaiseStateChanged();
+            RaiseChanged();
             return true;
         }
 
@@ -66,11 +70,13 @@ namespace StarlightBar.Core
         {
             foreach (var entry in saveData.inventory)
             {
-                if (entry.itemId == itemId)
+                if (entry.ItemId == itemId)
                     return entry;
             }
 
             return null;
         }
+
+        private void RaiseChanged() => OnChanged?.Invoke();
     }
 }
