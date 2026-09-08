@@ -97,7 +97,7 @@ namespace StarlightBar.UI
             {
                 var row = Instantiate(rowTemplate, content);
                 row.gameObject.SetActive(true);
-                row.SetData(entry.ItemId, entry.Quantity);
+                row.SetData(ItemCatalog.GetDisplayName(entry.ItemId), entry.Quantity);
             }
         }
     }

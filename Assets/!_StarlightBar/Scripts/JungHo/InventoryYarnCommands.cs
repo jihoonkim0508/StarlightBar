@@ -41,5 +41,10 @@ namespace StarlightBar.UI
         [YarnFunction("get_item_count")]
         public static int GetItemCount(string itemId) =>
             GameManager.Instance?.Inventory?.GetQuantity(itemId) ?? 0;
+
+        // get_item_name("아이템id") — 화면 표시용 한글 이름, 대사 안에 {get_item_name(...)}처럼 인라인 표시 가능
+        // (예: "<<give_item "warm_milk" 1>>" 다음 줄에 "{get_item_name(\"warm_milk\")}가 지급되었습니다.")
+        [YarnFunction("get_item_name")]
+        public static string GetItemName(string itemId) => ItemCatalog.GetDisplayName(itemId);
     }
 }
