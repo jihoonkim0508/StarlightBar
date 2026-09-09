@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -12,15 +13,31 @@ namespace StarlightBar.Core
     }
 
     [Serializable]
+    public sealed class InventorySaveEntry
+    {
+        public string itemId;
+        public string displayName;
+        public int quantity;
+
+        public InventorySaveEntry(string itemId, string displayName, int quantity)
+        {
+            this.itemId = itemId;
+            this.displayName = displayName;
+            this.quantity = quantity;
+        }
+    }
+
+    [Serializable]
     public sealed class SaveData
     {
         public int version = JsonSaveStore.CurrentVersion;
         public StoryProgress storyProgress = StoryProgress.Storygame1;
+        public List<InventorySaveEntry> inventory = new();
     }
 
     internal sealed class JsonSaveStore
     {
-        internal const int CurrentVersion = 1;
+        internal const int CurrentVersion = 2;
 
         private readonly string path = Path.Combine(Application.persistentDataPath, "save.json");
 
@@ -34,12 +51,15 @@ namespace StarlightBar.Core
                     return false;
 
                 data = JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
-                if (data == null || data.version != CurrentVersion ||
+                if (data == null || (data.version != 1 && data.version != CurrentVersion) ||
                     !Enum.IsDefined(typeof(StoryProgress), data.storyProgress))
                 {
                     data = null;
                     return false;
                 }
+
+                data.inventory ??= new List<InventorySaveEntry>();
+                data.version = CurrentVersion;
 
                 return true;
             }
