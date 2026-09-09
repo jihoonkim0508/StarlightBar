@@ -105,6 +105,3 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
-
-# Yarn Spinner language server file — regenerated on compile, differs per machine
-*.ysls.json
