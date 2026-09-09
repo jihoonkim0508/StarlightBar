@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using StarlightBar.Gameplay;
+using StarlightBar.Gameplay.Items;
 
 namespace StarlightBar.Core
 {
@@ -9,9 +11,7 @@ namespace StarlightBar.Core
 
         public bool HasSave { get; private set; }
         public StoryProgress StoryProgress => saveData?.storyProgress ?? StoryProgress.Storygame1;
-
-        // ===== [JungHo 추가] 인벤토리 접근용 프로퍼티 =====
-        public InventoryManager Inventory { get; private set; } // 인벤토리 매니저
+        public Inventory Inventory { get; } = new();
 
         private JsonSaveStore saveStore;
         private SaveData saveData;
@@ -29,7 +29,8 @@ namespace StarlightBar.Core
 
             saveStore = new JsonSaveStore();
             HasSave = saveStore.TryLoad(out saveData);
-            RebuildGameplayManagers(); // [JungHo 추가] 인벤토리 매니저 갱신
+            if (HasSave)
+                RestoreInventory();
         }
 
         private void Start()
@@ -46,32 +47,43 @@ namespace StarlightBar.Core
 
         public void StartNewGame()
         {
-            saveData = new SaveData();
-            HasSave = saveStore.Save(saveData);
-            RebuildGameplayManagers(); // [JungHo 추가]
-            if (HasSave)
-                LoadScene("Bar");
+            var newSave = new SaveData();
+            if (!saveStore.Save(newSave))
+                return;
+
+            saveData = newSave;
+            HasSave = true;
+            Inventory.Clear();
+            LoadScene("Bar");
         }
 
         public bool ContinueGame()
         {
-            HasSave = saveStore.TryLoad(out saveData);
-            RebuildGameplayManagers(); // [JungHo 추가]
-            if (HasSave)
-                LoadScene("Bar");
+            if (!saveStore.TryLoad(out var loadedSave))
+            {
+                HasSave = false;
+                return false;
+            }
 
-            return HasSave;
+            saveData = loadedSave;
+            HasSave = true;
+            RestoreInventory();
+            LoadScene("Bar");
+            return true;
         }
 
-        // ===== [JungHo 추가] 저장 관련 메서드 =====
-
-        // 현재 saveData를 파일에 저장
-        public bool SaveGame() => saveData != null && saveStore.Save(saveData);
-
-        // saveData가 (재)할당될 때마다 인벤토리 매니저를 새로 만들어 연결
-        private void RebuildGameplayManagers()
+        public bool SaveGame()
         {
-            Inventory = saveData != null ? new InventoryManager(saveData) : null;
+            if (saveData == null)
+                return false;
+
+            var nextSave = CreateSave(saveData.storyProgress);
+            if (!saveStore.Save(nextSave))
+                return false;
+
+            saveData = nextSave;
+            HasSave = true;
+            return true;
         }
 
         public bool CompleteStory(StoryProgress completedStory)
@@ -83,15 +95,43 @@ namespace StarlightBar.Core
                 completedStory != saveData.storyProgress)
                 return false;
 
-            saveData.storyProgress = completedStory switch
+            var nextProgress = completedStory switch
             {
                 StoryProgress.Storygame1 => StoryProgress.Storygame2,
                 StoryProgress.Storygame2 => StoryProgress.Complete,
                 _ => StoryProgress.Complete
             };
+            var nextSave = CreateSave(nextProgress);
 
-            HasSave = saveStore.Save(saveData);
-            return HasSave;
+            if (!saveStore.Save(nextSave))
+                return false;
+
+            saveData = nextSave;
+            HasSave = true;
+            return true;
+        }
+
+        private SaveData CreateSave(StoryProgress progress)
+        {
+            var data = new SaveData { storyProgress = progress };
+            foreach (var pair in Inventory.Items)
+                data.inventory.Add(new InventorySaveEntry(pair.Key.Id, pair.Key.DisplayName, pair.Value));
+            return data;
+        }
+
+        private void RestoreInventory()
+        {
+            Inventory.Clear();
+            if (saveData?.inventory == null)
+                return;
+
+            foreach (var entry in saveData.inventory)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.itemId) || entry.quantity <= 0)
+                    continue;
+
+                Inventory.Add(ItemCatalog.FromSave(entry.itemId, entry.displayName), entry.quantity);
+            }
         }
 
         public void LoadScene(string sceneName)
